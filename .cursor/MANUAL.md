@@ -1,6 +1,14 @@
 # Manual da conferência visual
 
-Sistema para receber a folha de indicadores de risco preenchida à mão, reconhecer o setor e passar os números para um documento padrão, igual em todos os setores, editável e imprimível.
+Há dois jeitos de usar.
+
+O link público, no mesmo modelo do TerroirMind e do treinador de maratona, abre em qualquer celular ou computador, sem instalar nada:
+
+https://herbert-emidio.github.io/conferencia-visual/
+
+A foto é lida no próprio aparelho e não é enviada ao GitHub. Gravar guarda a conferência naquele navegador. Outro celular começa vazio. O painel baixa um CSV se for preciso levar os números.
+
+A instalação no Apache (`index.php`) usa o banco SQLite do servidor e o leitor Python. Serve quando várias pessoas precisam enxergar os mesmos lançamentos.
 
 A folha de referência é `INDICADORES DE RISCO 2026 - ESPELHO.ods`. Os setores, leitos e campos usados pelo programa estão em `services/modelo.json`.
 

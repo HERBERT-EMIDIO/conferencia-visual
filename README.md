@@ -1,21 +1,23 @@
 # Conferência visual
 
-Lê a folha de indicadores de risco preenchida à mão, reconhece o setor e monta um documento padrão, editável e imprimível, no mesmo formato para todos os setores.
+O sistema abre no navegador, no celular ou no computador, sem instalar nada:
 
-O manual completo, com o fluxo e as metas de cada setor, está em [`.cursor/MANUAL.md`](.cursor/MANUAL.md).
+**https://herbert-emidio.github.io/conferencia-visual/**
+
+A foto da folha é lida no próprio aparelho e não vai para o GitHub. O que for gravado fica naquele navegador. O CSV do painel serve para levar os números a outro lugar.
+
+O manual completo está em [`.cursor/MANUAL.md`](.cursor/MANUAL.md).
 
 ## Uso
 
-1. Abra **Nova leitura**.
-2. Toque em **Tirar foto do papel** e fotografe a folha. No celular abre a câmera do aparelho.
-3. Confira o documento. O que a foto não leu fica em branco. O amarelo pede confirmação.
-4. Grave e imprima. **Documento** reabre a conferência pela data e pelo setor. **Painel** mostra os totais.
+1. Abra o link e toque em **Tirar foto do papel**.
+2. Confira o documento padrão. O que a foto não leu fica em branco. O amarelo pede confirmação.
+3. Grave neste aparelho e imprima.
+4. **Documento** reabre a conferência. **Painel** mostra os totais e baixa o CSV.
 
-PDF, planilha e uma foto já salva entram em **Ou envie um arquivo**. A planilha de exemplo está em `samples/conferencia_4_andar.csv`.
+## Instalação no servidor do hospital
 
-## Instalação
-
-É preciso PHP 8.2+ com `gd`, `sqlite3`, `fileinfo` e `mbstring`, Composer, Python 3.11+ e Apache.
+A pasta também roda no Apache com PHP e Python, gravando num banco SQLite compartilhado. É preciso PHP 8.2+ com `gd`, `sqlite3`, `fileinfo` e `mbstring`, Composer e Python 3.11+.
 
 ```bash
 composer install
@@ -34,4 +36,5 @@ Linux ou macOS:
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
-Publique a pasta no Apache e abra `index.php`. No XAMPP, um exemplo de endereço é `http://localhost/sitema_doc_dani/`. O banco SQLite e as fotos ficam em `storage/` e não acompanham este repositório.
+No XAMPP, abra `http://localhost/sitema_doc_dani/` (o `index.php`). O banco e as fotos ficam em `storage/` e não entram neste repositório.
+

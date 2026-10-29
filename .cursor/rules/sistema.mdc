@@ -13,4 +13,5 @@ O manual completo está em `.cursor/MANUAL.md`. Siga este contrato ao alterar o 
 - Fluxo: foto, PDF ou planilha entra em `upload.php`, o Python devolve JSON com valor e confiança, a tela monta o documento padrão e `process.php` grava com a chave setor + data + leito.
 - O documento de revisão e de impressão não é grade de planilha. Campos fora do perfil do setor ficam ocultos. Enfermaria sem número não é gravada.
 - Amarelo só com valor preenchido e confiança abaixo de 0,75. Gravar esses campos exige confirmação.
-- Não versionar `storage/database.sqlite` nem `storage/uploads`. Fotos e lançamentos ficam só no servidor.
+- O link público é GitHub Pages (`index.html`): a foto é lida no navegador e a gravação fica no aparelho. O `index.php` no Apache continua com SQLite compartilhado e o leitor Python.
+- Não versionar `storage/database.sqlite` nem `storage/uploads`. Fotos e lançamentos do servidor ficam só nele.
