@@ -1,0 +1,105 @@
+# PROMPT DE ARQUITETURA E DESENVOLVIMENTO: SISTEMA DE AUDITORIA E PADRONIZAÇÃO DE RELATÓRIOS HOSPITALARES
+
+Você atuar como um Desenvolvedor Full-Stack Sênior em PHP, Python, JavaScript e HTML/CSS. Sua tarefa é criar um sistema completo para automatizar a leitura, extração e padronização de planilhas e fotos de relatórios impressos de conferência visual nos andares/setores do hospital.
+
+---
+
+## 1. CONTEXTO DO PROJETO E FLUXO DE TRABALHO
+- O auditor/funcionário vai a cada setor/andar com uma folha impressa padronizada e preenche as informações à mão por leito/enfermaria.
+- O funcionário tira foto do papel preenchido ou envia a planilha digitalizada para a pasta/área de upload do sistema.
+- O sistema deve:
+  1. Receber o arquivo (Imagem/JPG/PNG, PDF ou Excel/CSV).
+  2. Ler o conteúdo usando um serviço de Visão/OCR em Python.
+  3. Mapear automaticamente as colunas da imagem para o banco de dados e para a Planilha Padrão do Relatório Consolidado.
+  4. Permitir revisão visual rápida em tela (interface HTML/JS).
+  5. Salvar e consolidar em uma planilha Excel padrão (.xlsx) por setor/andar e gerar o relatório corporativo final.
+
+---
+
+## 2. ESTRUTURA DO MODELO DE DADOS (BASEADO NA PLANILHA ANEXADA)
+
+### Abas / Setores Atendidos:
+- `4_ANDAR` (Exemplo de leitos: 401, 402, 403, 404, 405...)
+- `5_ANDAR`
+- `6_ANDAR`
+- `7_ANDAR`
+- `8_ANDAR`
+- `EMERG_CLINICA`
+- `EMERG_PEDIATRICA`
+
+### Estrutura Estrita de Colunas (De-Para do Mapeamento):
+1. **DATA** (Coluna A)
+2. **ENFERMARIAS / LEITO** (Coluna B) - ex: 401, 402...
+3. **LEITOS ATIVOS** (Coluna C)
+4. **INTERNADOS** (Coluna D)
+5. **META 1 - IDENTIFICAÇÃO DO PACIENTE:**
+   - `COM_PULSEIRA` (Coluna E)
+   - `COM_PLACA` (Coluna F)
+   - `PULSEIRA_ALERGIA_ROSA` (Coluna G)
+6. **META 2 - COMUNICAÇÃO EFETIVA:**
+   - `FICHAS_TRANSICAO_CUIDADOS` (Coluna H)
+   - `PRONTUARIOS_TRANSFERIDOS` (Coluna I)
+7. **META 3 - MEDICAMENTOS DE ALTA VIGILÂNCIA (MAV):**
+   - `MAV_COM_IDENTIFICACAO` (Coluna J)
+   - `TOTAL_MAV_OBSERVADOS` (Coluna K)
+8. **META 4 - CIRURGIA SEGURA:**
+   - `TERMO_CONSENTIMENTO_CIRURGICO` (Coluna L)
+   - `TERMO_CONSENTIMENTO_ANESTESICO` (Coluna M)
+   - `PRE_OPERATORIO_MEDIATO` (Coluna N)
+   - `PRE_OPERATORIO_IMEDIATO` (Coluna O)
+   - `PACIENTES_CIRURGIADOS` (Coluna P)
+9. **META 5 - HIGIENE E INFECÇÃO:**
+   - `CASOS_FLEBITE` (Coluna Q)
+   - `PACIENTES_COM_AVP` (Coluna R)
+10. **META 6 - PREVENÇÃO DE QUEDAS E LESÃO:**
+    - `PULSEIRA_RISCO_QUEDA_ROXA` (Coluna S)
+    - `PULSEIRA_RISCO_LESAO_MARROM` (Coluna T)
+11. **ASSINATURA / AUDITOR** (Coluna U)
+
+---
+
+## 3. ARQUITETURA TECNOLÓGICA E STACK
+
+Crie a estrutura de diretórios e arquivos do projeto da seguinte forma:
+
+### A. Frontend (HTML5 / Bootstrap 5 / JavaScript / CSS3):
+- `index.php`: Interface principal com formulário de upload (drag-and-drop), seletor de setor/andar e área de pré-visualização.
+- `dashboard.php`: Painel de visualização dos dados consolidados das metas por andar com gráficos simples.
+- `assets/js/app.js`: Processamento assíncrono via AJAX/Fetch API, validação do upload e renderização da tabela editável para conferência do usuário.
+- `assets/css/style.css`: Estilização limpa, responsiva e pronta para uso hospitalar.
+
+### B. Backend (PHP 8+):
+- `upload.php`: Recebe os arquivos de upload (fotos, PDFs ou planilhas) e aciona a API/script Python de leitura.
+- `process.php`: Recebe os dados JSON extraídos do Python, valida os campos obrigatórios e salva no banco de dados SQLite/MySQL.
+- `export.php`: Gera o arquivo Excel (.xlsx) preenchido e formatado exatamente igual ao modelo padrão de relatórios usando a biblioteca `PhpSpreadsheet`.
+
+### C. Módulo de Inteligência de Leitura / OCR (Python 3.10+):
+- `services/ocr_engine.py`: Script Python responsável pela leitura do arquivo enviado.
+  - Se for imagem/foto: Executa o modelo de OCR/Visão para ler a tabela manuscrita e extrair linha a linha relacionando ao Leito/Enfermaria.
+  - Se for planilha Excel/CSV: Lê via `pandas` ou `openpyxl`, mapeia as colunas para o padrão oficial e retorna a estrutura normalizada.
+  - Retorna um JSON padronizado com os dados extraídos e o nível de confiança da leitura.
+
+---
+
+## 4. REQUISITOS DE FUNCIONALIDADES E REGRAS DE NEGÓCIO
+
+1. **Detecção do Setor/Andar:**
+   - Se o usuário não selecionar manualmente o andar no upload, o script Python deve identificar a aba/andar a partir da numeração do leito (Ex: Leitos 400 = 4º Andar, Leitos 500 = 5º Andar).
+
+2. **Interface de Validação Humana (Human-in-the-Loop):**
+   - Após o processamento pelo Python, o frontend JavaScript deve exibir a foto original lado a lado com uma tabela HTML editável contendo os dados extraídos.
+   - Campos com baixa confiança na leitura do OCR devem ser destacados em amarelo para que o usuário confirme antes de exportar/salvar.
+
+3. **Geração do Relatório Padrão Excel (.xlsx):**
+   - A exportação PHP deve injetar os dados validados na planilha oficial mantendo o cabeçalho idêntico ao original (Data, Enfermarias, Meta 1 a Meta 6 e Assinatura).
+   - Cada andar deve ser salvo em sua respectiva aba (`4_ANDAR`, `5_ANDAR`, etc.) dentro do mesmo arquivo final.
+
+---
+
+## 5. PASSO A PASSO DA EXECUÇÃO
+
+Comece criando a estrutura completa de arquivos do projeto:
+1. Crie os arquivos PHP (`index.php`, `upload.php`, `export.php`).
+2. Crie o script Python `services/ocr_engine.py` configurado para receber o caminho do arquivo por linha de comando e retornar o JSON tratado.
+3. Crie a interface web em HTML/Bootstrap/JS com o visual moderno e suporte a drag-and-drop de arquivos.
+4. Inclua o script de exportação da planilha via `PhpSpreadsheet` que grava os dados na aba correta do setor selecionado.

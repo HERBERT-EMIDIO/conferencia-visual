@@ -1,0 +1,16 @@
+---
+description: Fluxo e regras da conferência visual hospitalar
+alwaysApply: true
+---
+
+# Conferência visual
+
+O manual completo está em `.cursor/MANUAL.md`. Siga este contrato ao alterar o sistema.
+
+- A fonte dos setores, leitos, metas e sinônimos é `services/modelo.json`, alinhada a `INDICADORES DE RISCO 2026 - ESPELHO.ods`. Não reintroduza leitos ativos, internados nem fichas de transição.
+- Perfis: `enfermaria` (4º ao 8º) coleta prontuários e meta 4; `sem_cirurgia` (clínica, trauma, UTQ) coleta prontuários e não coleta meta 4; `especial` (pediátrica, SR, USAN, UTIs) coleta checklist de transporte, admitidos e meta 4.
+- Leito `4xx`–`8xx` define o andar. Nome de leito só define setor quando existe em uma única lista. Não chute VERM, LAR, AMAR, UDC, COR 1–4 nem ISO.
+- Fluxo: foto, PDF ou planilha entra em `upload.php`, o Python devolve JSON com valor e confiança, a tela monta o documento padrão e `process.php` grava com a chave setor + data + leito.
+- O documento de revisão e de impressão não é grade de planilha. Campos fora do perfil do setor ficam ocultos. Enfermaria sem número não é gravada.
+- Amarelo só com valor preenchido e confiança abaixo de 0,75. Gravar esses campos exige confirmação.
+- Não versionar `storage/database.sqlite` nem `storage/uploads`. Fotos e lançamentos ficam só no servidor.

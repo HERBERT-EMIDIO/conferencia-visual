@@ -1,0 +1,13 @@
+.venv/
+vendor/
+services/__pycache__/
+__pycache__/
+*.pyc
+
+storage/database.sqlite
+storage/database.sqlite-wal
+storage/database.sqlite-shm
+storage/uploads/*
+!storage/uploads/.htaccess
+storage/exports/*
+!storage/exports/.htaccess

@@ -1,0 +1,8 @@
+{
+    "name": "hospital/conferencia-visual",
+    "description": "Auditoria e padronização de relatórios de conferência visual",
+    "require": {
+        "php": ">=8.2",
+        "phpoffice/phpspreadsheet": "^2.2"
+    }
+}
