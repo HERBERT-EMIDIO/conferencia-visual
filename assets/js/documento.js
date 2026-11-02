@@ -243,7 +243,7 @@
         const assinatura = campoAssinatura ? campoAssinatura.value : '';
         const dataLimpa = String(data).trim();
         if (!setor) erros.push('Selecione o setor.');
-        if (!/^(\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4})$/.test(dataLimpa)) {
+        if (!/^(\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{2,4})$/.test(dataLimpa)) {
             erros.push('Informe a data no formato dd/mm/aaaa.');
         }
         artigo.querySelectorAll('.doc-leito').forEach(function (card) {

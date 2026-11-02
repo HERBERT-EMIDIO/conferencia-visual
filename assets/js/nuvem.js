@@ -410,8 +410,10 @@
     function dataIso(valor) {
         const texto = String(valor || '').trim();
         if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) return texto;
-        const barra = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(texto);
-        return barra ? barra[3] + '-' + barra[2] + '-' + barra[1] : '';
+        const barra = /^(\d{2})\/(\d{2})\/(\d{2,4})$/.exec(texto);
+        if (!barra) return '';
+        const ano = barra[3].length === 2 ? '20' + barra[3] : barra[3];
+        return ano + '-' + barra[2] + '-' + barra[1];
     }
 
     function fold(valor) {

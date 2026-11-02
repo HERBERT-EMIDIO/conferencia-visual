@@ -8,6 +8,7 @@ import json
 import math
 import os
 import re
+import statistics
 import sys
 import tempfile
 import unicodedata
@@ -88,18 +89,32 @@ def parse_data(texto: str) -> str | None:
     bruto = texto.strip()
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", bruto):
         bruto = bruto[:10]
-    for formato in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%d.%m.%Y", "%d/%m/%y"):
+    for formato in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%d.%m.%Y", "%d/%m/%y", "%d-%m-%y", "%d.%m.%y"):
         try:
             return datetime.strptime(bruto, formato).strftime("%Y-%m-%d")
         except ValueError:
             continue
-    match = re.search(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b", texto)
+    match = re.search(r"\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})\b", texto)
     if match:
-        dia, mes, ano = (int(parte) for parte in match.groups())
+        ano = int(match.group(3))
+        if ano < 100:
+            ano += 2000
+        dia, mes = int(match.group(1)), int(match.group(2))
         try:
             return datetime(ano, mes, dia).strftime("%Y-%m-%d")
         except ValueError:
             return None
+    for padrao in (r"(\d{2})(\d{2})/(\d{2,4})", r"(\d{2})/(\d{2})(\d{2,4})"):
+        faltando = re.search(padrao, texto)
+        if not faltando:
+            continue
+        ano = int(faltando.group(3))
+        if ano < 100:
+            ano += 2000
+        try:
+            return datetime(ano, int(faltando.group(2)), int(faltando.group(1))).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
     return None
 
 
@@ -753,6 +768,253 @@ def registros_da_imagem(itens: list[dict], modelo: dict) -> tuple[list[dict], li
     return registros, avisos, texto
 
 
+COLUNAS_GRADE = [
+    "leitos_ativos",
+    "internados",
+    "com_pulseira",
+    "com_placa",
+    "pulseira_alergia_rosa",
+    "fichas_transicao_cuidados",
+    "prontuarios_transferidos",
+    "mav_com_identificacao",
+    "total_mav_observados",
+    "termo_consentimento_cirurgico",
+    "termo_consentimento_anestesico",
+    "pre_operatorio_mediato",
+    "pre_operatorio_imediato",
+    "pacientes_cirurgiados",
+    "casos_flebite",
+    "pacientes_com_avp",
+    "pulseira_risco_queda_roxa",
+    "pulseira_risco_lesao_marrom",
+]
+
+
+def imagem_tinta(path: Path):
+    import cv2
+    import numpy as np
+
+    imagem = cv2.imread(str(path))
+    if imagem is None:
+        return None
+    azul, verde, vermelho = cv2.split(imagem)
+    escuro = 255 - np.minimum(np.minimum(vermelho, verde), azul)
+    tinta_vermelha = np.clip(vermelho.astype(np.int16) - np.maximum(verde, azul).astype(np.int16), 0, 255)
+    tinta = np.maximum(escuro.astype(np.int16), tinta_vermelha)
+    return (255 - np.clip(tinta, 0, 255)).astype(np.uint8)
+
+
+def leitos_ancora(itens: list[dict]) -> tuple[list[dict], float]:
+    candidatos = [
+        item for item in itens
+        if re.fullmatch(r"[4-8]\d{2}", item["text"].strip()) and item["score"] >= 0.9
+    ]
+    if len(candidatos) < 4:
+        return [], 0
+    grupos: list[list[dict]] = []
+    for item in sorted(candidatos, key=lambda atual: atual["x"]):
+        if not grupos or abs(item["x"] - grupos[-1][0]["x"]) > 35:
+            grupos.append([item])
+        else:
+            grupos[-1].append(item)
+    coluna = max(grupos, key=len)
+    if len(coluna) < 4:
+        return [], 0
+    return sorted(coluna, key=lambda atual: atual["y"]), sum(item["x"] for item in coluna) / len(coluna)
+
+
+def bordas_verticais(realce, y0: int, y1: int) -> list[int]:
+    import numpy as np
+
+    faixa = realce[y0:y1, :]
+    if faixa.size == 0:
+        return []
+    forca = (faixa < 90).sum(axis=0)
+    limite = max(8, int(faixa.shape[0] * 0.42))
+    picos = []
+    for x, valor in enumerate(forca):
+        if valor < limite:
+            continue
+        if not picos or x - picos[-1] > 8:
+            picos.append(int(x))
+        elif valor >= forca[picos[-1]]:
+            picos[-1] = int(x)
+    return picos
+
+
+def faixas_colunas(bordas: list[int], x_leito: float, largura: int) -> list[tuple[int, int]]:
+    direitas = [x for x in bordas if x > x_leito + 20]
+    pares = []
+    for inicio, fim in zip(direitas, direitas[1:]):
+        if 30 <= fim - inicio <= 55:
+            pares.append((inicio, fim))
+        elif pares:
+            break
+    if len(pares) < 4:
+        return []
+    passo = int(statistics.median(fim - inicio for inicio, fim in pares))
+    cursor = pares[-1][1]
+    while len(pares) < len(COLUNAS_GRADE) and cursor + passo < largura - 8:
+        pares.append((cursor, cursor + passo))
+        cursor += passo
+    return pares[: len(COLUNAS_GRADE)]
+
+
+def mascara_vermelha(path: Path):
+    import cv2
+    import numpy as np
+
+    imagem = cv2.imread(str(path))
+    if imagem is None:
+        return None
+    azul, verde, vermelho = cv2.split(imagem)
+    return (
+        (vermelho.astype(np.int16) > verde.astype(np.int16) + 18)
+        & (vermelho.astype(np.int16) > azul.astype(np.int16) + 18)
+        & (vermelho > 70)
+    )
+
+
+def tem_escrita(recorte, vermelho) -> bool:
+    if vermelho is not None and int(vermelho.sum()) >= 18:
+        return True
+    if recorte.size == 0:
+        return False
+    tinta = recorte < 115
+    por_linha = tinta.sum(axis=1)
+    por_coluna = tinta.sum(axis=0)
+    if int(por_linha.max() or 0) > recorte.shape[1] * 0.7 and int((por_linha > 2).sum()) <= 2:
+        return False
+    if int(por_coluna.max() or 0) > recorte.shape[0] * 0.7 and int((por_coluna > 2).sum()) <= 2:
+        return False
+    return int(tinta.sum()) >= 40
+
+
+def parece_circulo(recorte) -> bool:
+    altura, largura = recorte.shape[:2]
+    if altura < 10 or largura < 10:
+        return False
+    tinta = recorte < 140
+    if int(tinta.sum()) < 35:
+        return False
+    por_linha = tinta.sum(axis=1)
+    if int(por_linha.max()) > largura * 0.75 and int((por_linha > 2).sum()) < 4:
+        return False
+    centro = recorte[altura // 4: altura * 3 // 4, largura // 4: largura * 3 // 4]
+    if centro.size == 0 or float((centro > 160).mean()) <= 0.62:
+        return False
+    miolo = tinta.copy()
+    miolo[altura // 4: altura * 3 // 4, largura // 4: largura * 3 // 4] = False
+    return int(miolo.sum()) > 20
+
+
+def glifo_para_numero(texto: str, nota: float, recorte) -> tuple[str, float]:
+    troca = {"O": "0", "o": "0", "Q": "0", "D": "0", "C": "0", "c": "0", "〇": "0", "○": "0"}
+    limpo = (texto or "").strip()
+    if limpo in troca:
+        return troca[limpo], min(float(nota), 0.7)
+    numero = parse_numero(limpo)
+    if numero is not None and float(nota) >= 0.32 and 0 <= int(float(numero)) <= 99:
+        return str(int(float(numero))), min(float(nota), 0.7)
+    if len(limpo) == 1 and limpo.isalpha() and parece_circulo(recorte):
+        return "0", 0.45
+    return "", 1.0
+
+
+def data_na_foto(itens: list[dict], realce, x_leito: float, y0: int, y1: int) -> str:
+    for item in itens:
+        data = parse_data(item["text"])
+        if data:
+            return data
+    import cv2
+
+    faixa = realce[max(0, y0):y1, : max(40, int(x_leito) - 12)]
+    if faixa.size == 0:
+        return ""
+    girada = cv2.rotate(faixa, cv2.ROTATE_90_CLOCKWISE)
+    ampliada = cv2.cvtColor(cv2.resize(girada, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC), cv2.COLOR_GRAY2BGR)
+    try:
+        pedacos = [str(texto) for _, texto, _nota in iterar_ocr(carregar_rapidocr()(ampliada))]
+    except Exception:
+        return ""
+    cola = ""
+    for pedaco in pedacos:
+        bruto = re.sub(r"\s+", "", pedaco)
+        if "/" in bruto or (cola and re.search(r"\d", bruto)):
+            cola += bruto
+            data = parse_data(cola)
+            if data:
+                return data
+        else:
+            cola = ""
+    return ""
+
+
+def ler_grade(path: Path, itens: list[dict], modelo: dict) -> list[dict]:
+    import cv2
+
+    realce = imagem_tinta(path)
+    leitos, x_leito = leitos_ancora(itens)
+    if realce is None or len(leitos) < 4:
+        return []
+    ys = [item["y"] for item in leitos]
+    bordas = bordas_verticais(realce, max(0, int(min(ys) - 30)), min(realce.shape[0], int(max(ys) + 30)))
+    colunas = faixas_colunas(bordas, x_leito, realce.shape[1])
+    if len(colunas) < 8:
+        return []
+    saltos = [b - a for a, b in zip(ys, ys[1:]) if 18 <= b - a <= 55]
+    passo_linha = statistics.median(saltos) if saltos else 32
+    acima = max(16, int(round(passo_linha * 0.62)))
+    abaixo = max(8, int(round(passo_linha * 0.36)))
+    vermelhos = mascara_vermelha(path)
+    trabalhos = []
+    metas = []
+    for indice, leito in enumerate(leitos):
+        centro = int(leito["y"])
+        if vermelhos is not None:
+            miolo = vermelhos[
+                max(0, centro - 8): min(vermelhos.shape[0], centro + 8),
+                colunas[0][0]: colunas[-1][1],
+            ]
+            if int(miolo.sum()) < 200:
+                continue
+        y0 = max(0, centro - acima)
+        y1 = min(realce.shape[0], centro + abaixo)
+        for coluna, (x0, x1) in enumerate(colunas):
+            recorte = realce[y0:y1, x0 + 4:x1 - 4]
+            tinta_cor = None if vermelhos is None else vermelhos[y0:y1, x0 + 4:x1 - 4]
+            if not tem_escrita(recorte, tinta_cor):
+                continue
+            grande = cv2.resize(recorte, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+            grande = cv2.copyMakeBorder(grande, 8, 8, 8, 8, cv2.BORDER_CONSTANT, value=255)
+            trabalhos.append(cv2.cvtColor(grande, cv2.COLOR_GRAY2BGR))
+            metas.append((indice, coluna, recorte))
+    if not trabalhos:
+        return []
+    try:
+        reconhecido = carregar_rapidocr().recognize_txt(trabalhos)
+        textos = list(reconhecido.txts or [])
+        notas = list(reconhecido.scores or [])
+    except Exception:
+        return []
+    linhas = [linha_vazia(modelo, 1) for _ in leitos]
+    for (indice, coluna, recorte), texto, nota in zip(metas, textos, notas):
+        valor, confianca = glifo_para_numero(str(texto), float(nota), recorte)
+        chave = COLUNAS_GRADE[coluna]
+        if valor == "" or chave not in linhas[indice]:
+            continue
+        linhas[indice][chave] = celula(valor, confianca)
+    data = data_na_foto(itens, realce, x_leito, int(min(ys) - 40), int(max(ys) + 40))
+    registros = []
+    for leito, campos in zip(leitos, linhas):
+        campos["leito"] = celula(leito["text"].strip(), 0.98)
+        if data:
+            campos["data"] = celula(data, 0.7)
+        if linha_util(campos, modelo):
+            registros.append({"campos": campos, "setor_aba": None})
+    return registros
+
+
 def ler_imagem(path: Path, modelo: dict, setor_usuario: str, avisos: list[str] | None = None) -> dict:
     itens = itens_ocr(path)
     if not itens:
@@ -762,6 +1024,9 @@ def ler_imagem(path: Path, modelo: dict, setor_usuario: str, avisos: list[str] |
             "avisos": avisos or [],
             "fonte": "imagem",
         }
+    registros_grade = ler_grade(path, itens, modelo)
+    if registros_grade:
+        return finalizar(registros_grade, "imagem", setor_usuario, " ".join(item["text"] for item in itens), avisos or [], modelo)
     registros, avisos_ocr, texto = registros_da_imagem(itens, modelo)
     return finalizar(registros, "imagem", setor_usuario, texto, (avisos or []) + avisos_ocr, modelo)
 

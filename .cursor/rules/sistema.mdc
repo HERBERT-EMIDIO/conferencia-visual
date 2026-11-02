@@ -7,7 +7,7 @@ alwaysApply: true
 
 O manual completo está em `.cursor/MANUAL.md`. Siga este contrato ao alterar o sistema.
 
-- A fonte dos setores, leitos, metas e sinônimos é `services/modelo.json`, alinhada a `INDICADORES DE RISCO 2026 - ESPELHO.ods`. Não reintroduza leitos ativos, internados nem fichas de transição.
+- A fonte dos setores, leitos e metas é `services/modelo.json`. A folha fotografada traz leitos ativos, internados e fichas de transição antes das metas. Esses campos fazem parte do documento.
 - Perfis: `enfermaria` (4º ao 8º) coleta prontuários e meta 4; `sem_cirurgia` (clínica, trauma, UTQ) coleta prontuários e não coleta meta 4; `especial` (pediátrica, SR, USAN, UTIs) coleta checklist de transporte, admitidos e meta 4.
 - Leito `4xx`–`8xx` define o andar. Nome de leito só define setor quando existe em uma única lista. Não chute VERM, LAR, AMAR, UDC, COR 1–4 nem ISO.
 - Fluxo: foto, PDF ou planilha entra em `upload.php`, o Python devolve JSON com valor e confiança, a tela monta o documento padrão e `process.php` grava com a chave setor + data + leito.

@@ -162,7 +162,7 @@ json_response([
 function normalizar_data(string $valor): ?string
 {
     $valor = trim($valor);
-    foreach (['!Y-m-d', '!d/m/Y', '!d-m-Y'] as $formato) {
+    foreach (['!Y-m-d', '!d/m/Y', '!d/m/y', '!d-m-Y', '!d-m-y'] as $formato) {
         $data = DateTime::createFromFormat($formato, $valor);
         $erros = DateTime::getLastErrors();
         $falhou = is_array($erros) && (($erros['warning_count'] ?? 0) > 0 || ($erros['error_count'] ?? 0) > 0);

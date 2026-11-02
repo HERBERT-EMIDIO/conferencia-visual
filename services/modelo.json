@@ -33,15 +33,15 @@
     "UTI_GERAL": "especial"
   },
   "modulos": {
-    "enfermaria": ["com_pulseira", "com_placa", "pulseira_alergia_rosa", "prontuarios_transferidos", "mav_com_identificacao", "total_mav_observados", "termo_consentimento_cirurgico", "termo_consentimento_anestesico", "pre_operatorio_mediato", "pre_operatorio_imediato", "pacientes_cirurgiados", "casos_flebite", "pacientes_com_avp", "pulseira_risco_queda_roxa", "pulseira_risco_lesao_marrom"],
-    "sem_cirurgia": ["com_pulseira", "com_placa", "pulseira_alergia_rosa", "prontuarios_transferidos", "mav_com_identificacao", "total_mav_observados", "casos_flebite", "pacientes_com_avp", "pulseira_risco_queda_roxa", "pulseira_risco_lesao_marrom"],
-    "especial": ["com_pulseira", "com_placa", "pulseira_alergia_rosa", "checklist_transporte_seguro", "pacientes_admitidos", "mav_com_identificacao", "total_mav_observados", "termo_consentimento_cirurgico", "termo_consentimento_anestesico", "pre_operatorio_mediato", "pre_operatorio_imediato", "pacientes_cirurgiados", "casos_flebite", "pacientes_com_avp", "pulseira_risco_queda_roxa", "pulseira_risco_lesao_marrom"]
+    "enfermaria": ["leitos_ativos", "internados", "com_pulseira", "com_placa", "pulseira_alergia_rosa", "fichas_transicao_cuidados", "prontuarios_transferidos", "mav_com_identificacao", "total_mav_observados", "termo_consentimento_cirurgico", "termo_consentimento_anestesico", "pre_operatorio_mediato", "pre_operatorio_imediato", "pacientes_cirurgiados", "casos_flebite", "pacientes_com_avp", "pulseira_risco_queda_roxa", "pulseira_risco_lesao_marrom"],
+    "sem_cirurgia": ["leitos_ativos", "internados", "com_pulseira", "com_placa", "pulseira_alergia_rosa", "fichas_transicao_cuidados", "prontuarios_transferidos", "mav_com_identificacao", "total_mav_observados", "casos_flebite", "pacientes_com_avp", "pulseira_risco_queda_roxa", "pulseira_risco_lesao_marrom"],
+    "especial": ["leitos_ativos", "internados", "com_pulseira", "com_placa", "pulseira_alergia_rosa", "fichas_transicao_cuidados", "checklist_transporte_seguro", "pacientes_admitidos", "mav_com_identificacao", "total_mav_observados", "termo_consentimento_cirurgico", "termo_consentimento_anestesico", "pre_operatorio_mediato", "pre_operatorio_imediato", "pacientes_cirurgiados", "casos_flebite", "pacientes_com_avp", "pulseira_risco_queda_roxa", "pulseira_risco_lesao_marrom"]
   },
   "leitos": {
     "4_ANDAR": ["401", "402", "403", "404", "405", "406", "407", "408", "409", "410", "411"],
     "5_ANDAR": ["501", "502", "503", "504", "505", "506", "507", "508", "509", "510", "511"],
     "6_ANDAR": ["600", "601", "602", "603", "604", "605", "606", "607", "608"],
-    "7_ANDAR": ["701", "702", "703", "704", "705", "706", "707", "708", "709", "710", "711", "712", "713", "714", "715", "716", "717", "718", "719", "720", "721", "722", "723", "724", "ISO 1", "ISO 2"],
+    "7_ANDAR": ["701", "702", "703", "704", "705", "706", "707", "708", "709", "710", "711", "712", "713", "714", "715", "716", "717", "718", "719", "720", "721", "722", "723", "724", "725", "726", "727", "728", "729", "730", "731", "732", "ISO 1", "ISO 2"],
     "8_ANDAR": ["801", "802", "803", "804", "805", "806", "807", "808", "809", "810", "811", "812", "813", "814", "ISO 1", "ISO 2"],
     "EMERG_CLINICA": ["VERM", "LAR", "AMAR 1", "AMAR 2", "UND AVC", "VERDE 1", "VERDE 2", "UDC", "ANEXO 2", "ANEXO 3", "ISO", "COR 1", "COR 2", "COR 3", "COR 4"],
     "EMERG_PEDIATRICA": ["PUNÇÃO", "VERM", "LAR", "AMAR", "VER INT", "VER EXT", "ISOLAM"],
@@ -55,6 +55,12 @@
   },
   "grupos": [
     {
+      "id": "ocupacao",
+      "titulo": "Leitos",
+      "cor": "0E4D5C",
+      "campos": ["leitos_ativos", "internados"]
+    },
+    {
       "id": "meta1",
       "titulo": "Meta 1 — Identificação do paciente",
       "cor": "0F5C6B",
@@ -64,7 +70,7 @@
       "id": "meta2",
       "titulo": "Meta 2 — Comunicação efetiva",
       "cor": "1D6A7A",
-      "campos": ["prontuarios_transferidos", "checklist_transporte_seguro", "pacientes_admitidos"]
+      "campos": ["fichas_transicao_cuidados", "prontuarios_transferidos", "checklist_transporte_seguro", "pacientes_admitidos"]
     },
     {
       "id": "meta3",
@@ -94,9 +100,12 @@
   "campos": [
     {"chave": "data", "rotulo": "Data", "tipo": "data", "sinonimos": ["dt", "dia"]},
     {"chave": "leito", "rotulo": "Enfermaria", "tipo": "texto", "sinonimos": ["enfermaria", "enfermarias", "leito", "leitos"]},
+    {"chave": "leitos_ativos", "rotulo": "Leitos ativos", "tipo": "numero", "sinonimos": ["leitos ativos"]},
+    {"chave": "internados", "rotulo": "Internados", "tipo": "numero", "sinonimos": ["internados"]},
     {"chave": "com_pulseira", "rotulo": "Com pulseira", "tipo": "numero", "sinonimos": ["n de pacientes ident", "pacientes identificados", "pulseira de identificacao"]},
     {"chave": "com_placa", "rotulo": "Com placa", "tipo": "numero", "sinonimos": ["placa de identificacao", "placa beira leito"]},
     {"chave": "pulseira_alergia_rosa", "rotulo": "Pulseira de alergia (rosa)", "tipo": "numero", "sinonimos": ["pulseira alergia", "alergia rosa", "pulseira rosa"]},
+    {"chave": "fichas_transicao_cuidados", "rotulo": "Fichas de transição de cuidados", "tipo": "numero", "sinonimos": ["fichas de transicao", "transicao de cuidados"]},
     {"chave": "prontuarios_transferidos", "rotulo": "Prontuários transferidos", "tipo": "numero", "sinonimos": ["prontuario transferido", "prontuarios"]},
     {"chave": "checklist_transporte_seguro", "rotulo": "Checklist de transporte seguro", "tipo": "numero", "sinonimos": ["transporte seguro", "checklist transporte"]},
     {"chave": "pacientes_admitidos", "rotulo": "Pacientes admitidos", "tipo": "numero", "sinonimos": ["admitidos"]},
