@@ -824,13 +824,11 @@ def leitos_ancora(itens: list[dict]) -> tuple[list[dict], float]:
 
 
 def bordas_verticais(realce, y0: int, y1: int) -> list[int]:
-    import numpy as np
-
     faixa = realce[y0:y1, :]
     if faixa.size == 0:
         return []
     forca = (faixa < 90).sum(axis=0)
-    limite = max(8, int(faixa.shape[0] * 0.42))
+    limite = max(8, int(faixa.shape[0] * 0.28))
     picos = []
     for x, valor in enumerate(forca):
         if valor < limite:
@@ -843,20 +841,24 @@ def bordas_verticais(realce, y0: int, y1: int) -> list[int]:
 
 
 def faixas_colunas(bordas: list[int], x_leito: float, largura: int) -> list[tuple[int, int]]:
-    direitas = [x for x in bordas if x > x_leito + 20]
+    direitas = [x for x in bordas if x_leito + 20 < x < largura - 4]
+    larguras = [fim - inicio for inicio, fim in zip(direitas, direitas[1:]) if 28 <= fim - inicio <= 70]
+    if len(larguras) < 4:
+        return []
+    passo = statistics.median(larguras)
     pares = []
     for inicio, fim in zip(direitas, direitas[1:]):
-        if 30 <= fim - inicio <= 55:
+        largura_col = fim - inicio
+        if passo * 0.72 <= largura_col <= passo * 1.55:
             pares.append((inicio, fim))
-        elif pares:
+            continue
+        if passo * 1.7 <= largura_col <= passo * 2.4:
+            meio = inicio + largura_col // 2
+            pares.append((inicio, meio))
+            pares.append((meio, fim))
+            continue
+        if pares:
             break
-    if len(pares) < 4:
-        return []
-    passo = int(statistics.median(fim - inicio for inicio, fim in pares))
-    cursor = pares[-1][1]
-    while len(pares) < len(COLUNAS_GRADE) and cursor + passo < largura - 8:
-        pares.append((cursor, cursor + passo))
-        cursor += passo
     return pares[: len(COLUNAS_GRADE)]
 
 
@@ -981,8 +983,8 @@ def ler_grade(path: Path, itens: list[dict], modelo: dict) -> list[dict]:
         y0 = max(0, centro - acima)
         y1 = min(realce.shape[0], centro + abaixo)
         for coluna, (x0, x1) in enumerate(colunas):
-            recorte = realce[y0:y1, x0 + 4:x1 - 4]
-            tinta_cor = None if vermelhos is None else vermelhos[y0:y1, x0 + 4:x1 - 4]
+            recorte = realce[y0:y1, x0 + 3:x1 - 3]
+            tinta_cor = None if vermelhos is None else vermelhos[y0:y1, x0 + 3:x1 - 3]
             if not tem_escrita(recorte, tinta_cor):
                 continue
             grande = cv2.resize(recorte, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)

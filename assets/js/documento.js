@@ -24,7 +24,10 @@
     function valorCampo(linha, chave) {
         const info = linha && linha[chave];
         if (!info) return { valor: '', confianca: 1 };
-        if (typeof info === 'object') return { valor: info.valor || '', confianca: Number(info.confianca ?? 1) };
+        if (typeof info === 'object') {
+            const valor = info.valor == null ? '' : String(info.valor);
+            return { valor: valor, confianca: Number(info.confianca ?? 1) };
+        }
         return { valor: String(info), confianca: 1 };
     }
 
