@@ -114,12 +114,27 @@
         imagem.alt = 'Foto da conferência';
         imagem.src = URL.createObjectURL(arquivo);
         preview.appendChild(imagem);
-        mostrarStatus('info', 'Lendo a foto neste aparelho. A primeira vez pode demorar para baixar o leitor.');
+        mostrarStatus('info', 'Lendo a escrita manual neste aparelho.');
+        const leitura = window.Grade ? Grade.ler(arquivo, function (mensagem) { mostrarStatus('info', mensagem); }) : Promise.resolve(null);
+        leitura.then(function (lida) {
+            if (lida && lida.linhas && lida.linhas.length) {
+                const setor = document.getElementById('setor').value || lida.setor;
+                publicar(lida.linhas, setor, 'Imagem', '');
+                return;
+            }
+            lerFotoTexto(arquivo);
+        }).catch(function () {
+            lerFotoTexto(arquivo);
+        });
+    }
+
+    function lerFotoTexto(arquivo) {
         if (!window.Tesseract) {
             publicar([], document.getElementById('setor').value, 'Imagem', '');
             mostrarStatus('warning', 'O leitor de foto não carregou. Complete o documento manualmente.');
             return;
         }
+        mostrarStatus('info', 'A grade não foi localizada. Tentando a leitura do texto.');
         Tesseract.recognize(arquivo, 'por')
             .then(function (resultado) {
                 const texto = resultado && resultado.data ? resultado.data.text : '';
